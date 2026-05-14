@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MNP Recommendations</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel">
+        <h1>Recommandations produits</h1>
+        <form id="search-form">
+          <label for="user-id">Utilisateur</label>
+          <div class="search-row">
+            <input id="user-id" name="user-id" placeholder="Ex: 101" required />
+            <button type="submit">Chercher</button>
+          </div>
+        </form>
+        <div id="status" class="status"></div>
+        <ul id="results" class="results"></ul>
+      </section>
+      <section class="panel">
+        <div class="section-header">
+          <h2>Evenements recents</h2>
+          <button id="refresh-events" type="button">Actualiser</button>
+        </div>
+        <div id="events-status" class="status"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>UserId</th>
+                <th>ProductId</th>
+                <th>Score</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="events-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

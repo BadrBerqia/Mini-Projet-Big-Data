@@ -1,0 +1,83 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: mnp_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: mnp_kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  spark:
+    build:
+      context: ./spark
+    image: mnp-spark:3.5.8-python3
+    container_name: mnp_spark
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    user: root
+    ports:
+      - "8081:8080"
+      - "7077:7077"
+    volumes:
+      - ./:/app
+
+  spark-worker:
+    build:
+      context: ./spark
+    image: mnp-spark:3.5.8-python3
+    container_name: mnp_spark_worker
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark:7077"]
+    user: root
+    depends_on:
+      - spark
+    volumes:
+      - ./:/app
+
+  airflow:
+    build:
+      context: ./airflow
+    image: mnp-airflow:2.9.1
+    container_name: mnp_airflow
+    user: "0:0"
+    depends_on:
+      - kafka
+      - spark
+    environment:
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
+      AIRFLOW_UID: 50000
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./:/app
+    entrypoint: ["/opt/airflow/start-airflow.sh"]
+
+  api:
+    build:
+      context: ./api
+    container_name: mnp_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      RECOMMENDATIONS_PATH: /app/data/recommendations.json
+      STREAMING_EVENTS_PATH: /app/data/streaming_events
