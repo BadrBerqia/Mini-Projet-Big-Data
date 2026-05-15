@@ -16,5 +16,8 @@ airflow/logs/
 airflow/airflow.db
 airflow/webserver_config.py
 
+docs/presentation_day_guide.md
+docs/presentation_day_guide.pdf
+
 *.log
 *.tmp
